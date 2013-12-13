@@ -28,8 +28,7 @@ from BeautifulSoup import BeautifulSoup
 from mechanize._opener import urlopen
 from logging.handlers import SysLogHandler
 
-# Don't change this URL!
-githubUrl = "https://github.com/settings/security"
+githubUrl = ""
 debug = 0
 syslogServer = ""
 
@@ -75,16 +74,12 @@ def main(argv):
 	global syslogServer
 
 	parser = OptionParser(usage="usage: %prog [options]", version="%prog 1.0")
-	parser.add_option('-u', '--user', dest='githubUser', type='string',
-		help='github.com user name')
-	parser.add_option('-p', '--password', dest='githubPass', type='string',
-		help='github.com password')
-	parser.add_option('-s', '--statusfile', dest='statusFile', type='string',
-		help='status file for event history')
-	parser.add_option('-S', '--syslog', dest='syslogServer', type='string',
-		help='send Syslog messages to specified server')
-	parser.add_option('-d', '--debug', action='store_true', dest='debug', \
-		help='increase verbosity')
+	parser.add_option('-u', '--user', dest='githubUser', type='string', help='github.com user name')
+	parser.add_option('-p', '--password', dest='githubPass', type='string', help='github.com password')
+	parser.add_option('-s', '--statusfile', dest='statusFile', type='string', help='status file for event history')
+	parser.add_option('-S', '--syslog', dest='syslogServer', type='string', help='send Syslog messages to specified server')
+	parser.add_option('-O', '--organization', dest='orgName', type='string', help='github.com organization (ie your company)')
+	parser.add_option('-d', '--debug', action='store_true', dest='debug', help='increase verbosity')
 	(options, args) = parser.parse_args()
 
 	if options.debug:
@@ -99,17 +94,23 @@ def main(argv):
 		print "Please use the -p switch to provide a password"
 		sys.exit(1)
 
-	syslogServer = options.syslogServer
-	try:
-		socket.gethostbyname(syslogServer)
-	except socket.error as e:
-		print "Invalid Syslog server: %s" % e
-		sys.exit(1)
+	if options.orgName:
+		githubUrl = "https://github.com/organizations/" + options.orgName + "/settings/security"
+	else:
+		githubUrl = "https://github.com/settings/security"
+
+	if options.syslogServer:
+		syslogServer = options.syslogServer
+		try:
+			socket.gethostbyname(syslogServer)
+		except socket.error as e:
+			print "Invalid Syslog server: %s" % e
+			sys.exit(1)
 
 	if options.debug: print "+++ Sending Syslog events to %s" % syslogServer
 
 	if options.statusFile == None:
-		statusFile = "~/.github.status"
+		statusFile = os.environ['HOME'] + "/.github.status"
 	else:
 		statusFile = options.statusFile
 	if not os.path.isfile(statusFile):
