@@ -15,6 +15,7 @@
 # Feel free to use the code, but please share the changes you've made
 # 
 
+import re
 import os
 import sys
 import time
@@ -187,7 +188,8 @@ def main(argv):
 			if th.string == 'created_at':
 				# 2012-03-07 11:44:59
 				pattern = '%Y-%m-%d %H:%M:%S'
-				eventEpoch = int(time.mktime(time.strptime(td.string, pattern)))
+				matchedTime = re.match('\d{4}-\d{2}-\d{2} \d{2}:\d{2}:\d{2}', td.string)
+				eventEpoch = int(time.mktime(time.strptime(matchedTime.group(0), pattern)))
 			eventAttributes.append("\"%s\":\"%s\"" % (th.string, td.string))
 
 		if (firstEpoch < eventEpoch):
